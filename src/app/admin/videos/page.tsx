@@ -9,15 +9,23 @@ import {
   User,
   Trash2,
   PlusCircle,
+  Edit,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function VideosPage() {
   const [showTopics, setShowTopics] = useState(false);
   const [openTopic, setOpenTopic] = useState<string | null>(null);
   const [openVideo, setOpenVideo] = useState<string | null>(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [isNewTopic, setIsNewTopic] = useState(false);
+
+  const [showEditTopicModal, setShowEditTopicModal] = useState(false);
+  const [editTopicName, setEditTopicName] = useState("");
+
+  const [showEditVideoModal, setShowEditVideoModal] = useState(false);
+  const [editVideo, setEditVideo] = useState<any>(null);
+
+  const router = useRouter();
 
   const topics = [
     {
@@ -50,16 +58,6 @@ export default function VideosPage() {
     },
   ];
 
-  const handleDelete = (title: string) => {
-    alert(`Deleted video: ${title}`);
-  };
-
-  const handleUpload = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowUploadModal(false);
-    alert("New video added (mock). Backend integration coming soon!");
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] text-gray-100 p-8">
       <motion.h1
@@ -76,14 +74,13 @@ export default function VideosPage() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => setShowUploadModal(true)}
+          onClick={() => router.push("/admin/upload")}
           className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-5 py-2 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-200"
         >
           <PlusCircle className="w-5 h-5" /> Upload New Video
         </motion.button>
       </div>
 
-      {/* Main heading */}
       <motion.div
         whileHover={{ scale: 1.02 }}
         onClick={() => setShowTopics(!showTopics)}
@@ -99,7 +96,6 @@ export default function VideosPage() {
         )}
       </motion.div>
 
-      {/* Topics List */}
       <AnimatePresence>
         {showTopics && (
           <motion.div
@@ -124,11 +120,35 @@ export default function VideosPage() {
                   <h3 className="text-lg font-medium flex items-center gap-2">
                     <Tag className="w-4 h-4 text-purple-400" /> {topic.name}
                   </h3>
-                  {openTopic === topic.name ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                  )}
+
+                  <div className="flex items-center gap-3">
+                    {/* Edit Topic */}
+                    <Edit
+                      className="w-4 h-4 text-yellow-400 hover:text-yellow-300"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditTopicName(topic.name);
+                        setShowEditTopicModal(true);
+                      }}
+                    />
+
+                    {/* Delete Topic */}
+                    <Trash2
+                      className="w-4 h-4 text-red-500 hover:text-red-400"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete topic "${topic.name}"?`)) {
+                          alert("Topic deleted (mock)");
+                        }
+                      }}
+                    />
+
+                    {openTopic === topic.name ? (
+                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    )}
+                  </div>
                 </div>
 
                 {/* Videos List */}
@@ -155,14 +175,27 @@ export default function VideosPage() {
                               <PlayCircle className="w-4 h-4 text-blue-400" />
                               {video.title}
                             </div>
+
                             <div className="flex items-center gap-3">
+                              {/* Edit Video */}
+                              <Edit
+                                className="w-4 h-4 text-yellow-400 hover:text-yellow-300"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditVideo(video);
+                                  setShowEditVideoModal(true);
+                                }}
+                              />
+
+                              {/* Delete Video */}
                               <Trash2
                                 className="w-4 h-4 text-red-500 hover:text-red-400"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDelete(video.title);
+                                  alert(`Deleted video: ${video.title}`);
                                 }}
                               />
+
                               {openVideo === video.title ? (
                                 <ChevronUp className="w-4 h-4 text-gray-500" />
                               ) : (
@@ -172,38 +205,36 @@ export default function VideosPage() {
                           </div>
 
                           {/* Expanded video preview */}
-                          <AnimatePresence>
-                            {openVideo === video.title && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.4 }}
-                                className="bg-[#1a1a2e] rounded-xl p-4 mt-2 border border-gray-800 flex gap-4"
-                              >
-                                <img
-                                  src={video.thumbnail}
-                                  alt={video.title}
-                                  className="w-40 h-24 rounded-lg object-cover border border-gray-700"
-                                />
-                                <div className="flex flex-col justify-between">
-                                  <h4 className="text-gray-200 font-medium">
-                                    {video.title}
-                                  </h4>
-                                  <p className="text-sm text-gray-400 flex items-center gap-2">
-                                    <User className="w-4 h-4 text-gray-500" />
-                                    {video.uploader} • {video.time}
-                                  </p>
-                                  <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    className="mt-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-1.5 rounded-lg shadow-md text-sm font-semibold"
-                                  >
-                                    ▶ Play Video
-                                  </motion.button>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                          {openVideo === video.title && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.4 }}
+                              className="bg-[#1a1a2e] rounded-xl p-4 mt-2 border border-gray-800 flex gap-4"
+                            >
+                              <img
+                                src={video.thumbnail}
+                                alt={video.title}
+                                className="w-40 h-24 rounded-lg object-cover border border-gray-700"
+                              />
+                              <div className="flex flex-col justify-between">
+                                <h4 className="text-gray-200 font-medium">
+                                  {video.title}
+                                </h4>
+                                <p className="text-sm text-gray-400 flex items-center gap-2">
+                                  <User className="w-4 h-4 text-gray-500" />
+                                  {video.uploader} • {video.time}
+                                </p>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  className="mt-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-1.5 rounded-lg shadow-md text-sm font-semibold"
+                                >
+                                  ▶ Play Video
+                                </motion.button>
+                              </div>
+                            </motion.div>
+                          )}
                         </motion.li>
                       ))}
                     </motion.ul>
@@ -215,78 +246,75 @@ export default function VideosPage() {
         )}
       </AnimatePresence>
 
-      {/* Upload Modal */}
-      <AnimatePresence>
-        {showUploadModal && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              transition={{ duration: 0.3 }}
-              className="bg-[#111827] border border-gray-700 rounded-2xl p-6 w-[90%] max-w-lg shadow-2xl"
-            >
-              <h2 className="text-xl font-semibold mb-4 text-white">
-                📤 Upload New Video
-              </h2>
-              <form onSubmit={handleUpload} className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Video Title"
-                  required
-                  className="w-full bg-[#1e293b] text-white rounded-lg p-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Video URL"
-                  required
-                  className="w-full bg-[#1e293b] text-white rounded-lg p-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <select
-                  onChange={(e) => setIsNewTopic(e.target.value === "new")}
-                  className="w-full bg-[#1e293b] text-white rounded-lg p-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Select Topic</option>
-                  {topics.map((t) => (
-                    <option key={t.name}>{t.name}</option>
-                  ))}
-                  <option value="new">➕ Create New Topic</option>
-                </select>
-                {isNewTopic && (
-                  <input
-                    type="text"
-                    placeholder="Enter New Topic Name"
-                    required
-                    className="w-full bg-[#1e293b] text-white rounded-lg p-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                )}
-                <div className="flex justify-end gap-3 mt-5">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    type="button"
-                    onClick={() => setShowUploadModal(false)}
-                    className="px-4 py-2 rounded-lg bg-gray-600 text-white"
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    type="submit"
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-semibold"
-                  >
-                    Upload
-                  </motion.button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ✅ Edit Topic Modal */}
+      {showEditTopicModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-[#111827] border border-gray-700 rounded-2xl p-6 w-[90%] max-w-md shadow-2xl">
+            <h2 className="text-xl font-semibold mb-4 text-white">Edit Topic</h2>
+            <input
+              type="text"
+              value={editTopicName}
+              onChange={(e) => setEditTopicName(e.target.value)}
+              className="w-full bg-[#1e293b] text-white rounded-lg p-3 border border-gray-600 focus:outline-none mb-4"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowEditTopicModal(false)}
+                className="px-4 py-2 rounded-lg bg-gray-700 text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  alert(`Topic renamed to: ${editTopicName} (mock)`);
+                  setShowEditTopicModal(false);
+                }}
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Edit Video Modal */}
+      {showEditVideoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-[#111827] border border-gray-700 rounded-2xl p-6 w-[90%] max-w-lg shadow-2xl">
+            <h2 className="text-xl font-semibold mb-4 text-white">Edit Video</h2>
+
+            <input
+              defaultValue={editVideo?.title}
+              className="w-full bg-[#1e293b] text-white rounded-lg p-3 border border-gray-600 mb-3"
+            />
+            <input
+              defaultValue={editVideo?.thumbnail}
+              className="w-full bg-[#1e293b] text-white rounded-lg p-3 border border-gray-600 mb-3"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowEditVideoModal(false)}
+                className="px-4 py-2 rounded-lg bg-gray-700 text-white"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  alert("Video updated (mock)");
+                  setShowEditVideoModal(false);
+                }}
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
